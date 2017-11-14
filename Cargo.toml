@@ -9,4 +9,5 @@
 	pwhash    = "*"
 	pgs-files = "*"
 	privdrop  = "*"
+	users     = "*"
 
