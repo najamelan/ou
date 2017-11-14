@@ -6,6 +6,7 @@ extern crate users    ;
 use std::process::exit;
 use std::process::Command;
 use std::os::unix::process::CommandExt;
+use std::env;
 
 use pgs_files::shadow;
 
@@ -16,7 +17,12 @@ use users    ::get_current_uid;
 
 fn main()
 {
-	let user = "test";
+	let args: Vec<String> = env::args().collect();
+
+	if args.len() != 3 { usage(); exit( 1 ) }
+
+	let user = &args[1];
+	let cmd  = &args[2];
 	let pass = askpass( user );
 
 	// Get shadow entry
@@ -35,17 +41,19 @@ fn main()
 
 	// We're good, user authenticated.
 	//
-	// Change uid
+	// Drop privileges
 	//
-	let dropped = PrivDrop::default().user( user ).apply();
+	PrivDrop::default().user( user ).apply()
 
-	print!("{:?}\n", dropped);
+		.unwrap_or_else( |e| { panic!( "Failed to drop privileges to user: {}, {}", user, e ) } )
+	;
+
 
 	// Run command
 	//
-	let output = Command::new( "id" ).output()
+	let output = Command::new( "bash" ).arg( "-c" ).arg( cmd ).output()
 
-		.unwrap_or_else( |e| { panic!( "failed to execute id: {}", e ) } )
+		.unwrap_or_else( |e| { panic!( "failed to execute {}: {}", cmd, e ) } )
 	;
 
 	let stdout = std::str::from_utf8( &output.stdout ).unwrap();
@@ -74,4 +82,19 @@ fn askpass( user: &str ) -> String
 
 		.expect( "Password from returned from zenity contains invalid utf." )
 		.to_string()
+}
+
+
+fn usage()
+{
+	print!(
+"
+ou (other user) allows you to run a command as another user when you are yourself unprivileged. You will need to have the password of the other user. A zenity dialog will ask you for the password. This allows to create .desktop launcher which will run commands as a different user without needing the end user to use the terminal.
+
+The ou binary must be owned by root and have the setuid bit set.
+
+Usage: ou user cmd
+
+");
+
 }
