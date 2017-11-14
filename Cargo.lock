@@ -1,6 +1,6 @@
 [root]
 name = "ou"
-version = "0.1.0"
+version = "0.1.0-2017.11.14-alpha"
 dependencies = [
  "pgs-files 0.0.7 (registry+https://github.com/rust-lang/crates.io-index)",
  "privdrop 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
